@@ -101,34 +101,38 @@ class DCMotor:
           GPIO.output([self.in1, self.in2, self.ena], GPIO.LOW)
 
 class Robot:
-     def __init__(self, step_pins, dc_pins, step_delay=0.002, dc_freq=1000):
-          self.step_motor = Step_Motor(*step_pins, delay=step_delay)
-          self.dc_motor = DCMotor(*dc_pins, freq=dc_freq)
+     def __init__(self, step_pins1, step_pins2, step_delay=0.002):
+          self.step_motor1 = Step_Motor(*step_pins1, delay=step_delay)
+          self.step_motor2 = Step_Motor(*step_pins2, delay=step_delay)
           
      def cleanup_all(self):
-          self.step_motor.cleanup()
-          self.dc_motor.cleanup()
+          self.step_motor1.cleanup()
+          self.step_motor2.cleanup()
           GPIO.cleanup()
 
 if __name__ == "__main__":
      print("Try to test motor control classes...")
-     step_pins = [17,18,27,22]
-     dc_pins = [23,24,25]
+     step_pins1 = [17,18,27,22]
+     step_pins2 = [23,24,5,6]
 
-     robot = Robot(step_pins, dc_pins)
+     robot = Robot(step_pins1, step_pins2)
 
      try:
-          print("Step motor forward 1 round")
-          robot.step_motor.rotate(4096)
+          print("Step motor 1 forward 1 round")
+          robot.step_motor1.rotate(4096)
           time.sleep(1)
 
-          print("DC motor forward")
-          robot.dc_motor.forward(50)
-          time.sleep(2)
-          print("DC motor backward")
-          robot.dc_motor.backward(70)
-          time.sleep(2)
-          robot.dc_motor.stop()
+          print("Step motor 2 forward 1 round")
+          robot.step_motor2.rotate(4096)
+          time.sleep(1)
+
+          # print("DC motor forward")
+          # robot.dc_motor.forward(50)
+          # time.sleep(2)
+          # print("DC motor backward")
+          # robot.dc_motor.backward(70)
+          # time.sleep(2)
+          # robot.dc_motor.stop()
 
      except KeyboardInterrupt:
           print("User Interrupt")
