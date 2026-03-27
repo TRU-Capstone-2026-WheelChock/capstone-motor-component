@@ -7,16 +7,18 @@ ARG USERNAME=dev
 ARG UID=1000
 ARG GID=1000
 
-RUN apt-get update && apt-get install -y --no-install-recommends git \
+RUN apt-get update && apt-get install -y --no-install-recommends git gcc python3-dev libffi-dev \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir RPi.GPIO smbus2  poetry 
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_VIRTUALENVS_CREATE=true \
     PYTHONPATH=/app/src \
-    MOTOR_CONFIG_PATH=/app/config/config.yml
+    MOTOR_CONFIG_PATH=/app/config/config.yml \
+    BLINKA_FORCEBOARD=RASPBERRY_PI_4B \
+    BLINKA_FORCECHIP=BCM2XXX
 
 RUN groupadd -g ${GID} ${USERNAME} \
  && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME}
@@ -30,4 +32,5 @@ RUN mkdir -p /app/config
 RUN chown -R ${USERNAME}:${USERNAME} /app
 USER ${USERNAME}
 
-CMD ["sleep", "infinity"]
+# CMD ["sleep", "infinity"]
+CMD [ "python", "motors.py" ]

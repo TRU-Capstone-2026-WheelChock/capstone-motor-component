@@ -119,7 +119,6 @@ class Robot:
           self.step_motor1.rotate_degress(45, deploy)
           time.sleep(1)
           self.step_motor2.rotate_degress(50, deploy)
-          self.cleanup_all()
 
 if __name__ == "__main__":
      print("Try to test motor control classes...")
@@ -130,12 +129,12 @@ if __name__ == "__main__":
 
      try:
           
-          print("Step motor 1 forward 45 degrees")
+          print("Step motors  deploy")
           # robot.step_motor1.rotate(1024)
           robot.deploy(1)
           
           time.sleep(0.5)
-          print("Step motor 1 backward 45 degrees")
+          print("Step motor flod")
           robot.deploy(-1)
           # print("Step motor 2 forward 1 round")
           # robot.step_motor2.rotate(1024)

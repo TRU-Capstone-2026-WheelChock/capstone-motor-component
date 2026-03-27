@@ -32,6 +32,7 @@ services:
 
   motor:
     <<: *runtime-base
+    privileged: true
     command: python -m capstone_motor.main
 
 volumes:

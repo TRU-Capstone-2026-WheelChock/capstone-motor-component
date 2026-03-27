@@ -4,7 +4,7 @@ import asyncio
 import logging
 
 import msg_handler
-from motors import Robot
+from capstone_motor.motors import Robot
 
 from capstone_motor.config import DriverConfig
 
@@ -14,10 +14,10 @@ class MotorHardwareController:
 
     def __init__(self, logger: logging.Logger | None = None) -> None:
         self.logger = logger or logging.getLogger(__name__)
-        self.robot = Robot(step_pins=[17,18,27,22], dc_pins=[23,24,25])
-
-        self.steps = 1024
-        self.DC_speed = 50
+        self.step_1=[17,18,27,22]
+        self.step_2=[23,24,25,16]
+        self.robot = Robot(self.step_1, self.step_2)
+        self.deploy = 1
 
     async def initialize(self) -> None:
         """Reserve GPIO, serial, CAN, or any other hardware resources here."""
@@ -34,17 +34,15 @@ class MotorHardwareController:
 
     async def deploy(self) -> msg_handler.MotorState:
         raise NotImplementedError("Add direct deploy control code here.")
-        self.robot.step_motor(self.steps)
-        self.robot.dc_motor.forward(self.DC_speed)
-        time.sleep(3)
-        self.robot.dc_motor.stop()
+        self.deploy = 1
+        self.robot.deploy(deploy)
+        time.sleep(1)
 
     async def fold(self) -> msg_handler.MotorState:
         raise NotImplementedError("Add direct fold control code here.")
-        self.robot.step_motor(-self.steps)
-        self.robot.dc_motor.forward(-self.DC_speed)
-        time.sleep(3)
-        self.robot.dc_motor.stop()
+        self.deploy = -1
+        self.robot.deploy(deploy)
+        time.sleep(1)
 
     async def read_status(self) -> msg_handler.MotorState:
         raise NotImplementedError("Add direct motor status read code here.")

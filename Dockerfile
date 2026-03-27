@@ -10,9 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app/src \
     MOTOR_CONFIG_PATH=/app/config/config.yml
 
-RUN apt-get update && apt-get install -y --no-install-recommends git \
+RUN apt-get update && apt-get install -y --no-install-recommends git gcc python3-dev \
  && rm -rf /var/lib/apt/lists/*
 
+RUN pip install --no-cache-dir RPi.GPIO
 RUN pip install --no-cache-dir poetry
 
 COPY pyproject.toml poetry.lock* ./
