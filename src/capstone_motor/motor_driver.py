@@ -4,7 +4,6 @@ import asyncio
 import logging
 
 import msg_handler
-import time
 from capstone_motor.motors import Robot
 
 from capstone_motor.config import DriverConfig
@@ -17,11 +16,14 @@ class MotorHardwareController:
         self.logger = logger or logging.getLogger(__name__)
         self.step_1=[17,18,27,22]
         self.step_2=[23,24,25,16]
-        self.robot = Robot(self.step_1, self.step_2)
+        self.robot: Robot | None = None
         self.deploy_direction = 1
+        self._status: msg_handler.MotorState = msg_handler.MotorState.STARTING
 
     async def initialize(self) -> None:
         """Reserve GPIO, serial, CAN, or any other hardware resources here."""
+        self.robot = Robot(self.step_1, self.step_2)
+        self._status = msg_handler.MotorState.FOLDED
 
     async def apply_order(
         self,
@@ -34,25 +36,31 @@ class MotorHardwareController:
         raise ValueError(f"Unsupported motor order: {ordered_mode}")
 
     async def deploy(self) -> msg_handler.MotorState:
+        if self.robot is None:
+            raise RuntimeError("motor hardware not initialized")
         self.deploy_direction = 1
-        self.robot.deploy(self.deploy_direction)
-        time.sleep(1)
-        # raise NotImplementedError("Add direct deploy control code here.")
-        
+        self._status = msg_handler.MotorState.DEPLOYING
+        await self.robot.deploy(self.deploy_direction)
+        self._status = msg_handler.MotorState.DEPLOYED
+        return self._status
 
     async def fold(self) -> msg_handler.MotorState:
+        if self.robot is None:
+            raise RuntimeError("motor hardware not initialized")
         self.deploy_direction = -1
-        self.robot.deploy(self.deploy_direction)
-        time.sleep(1)
-        # raise NotImplementedError("Add direct fold control code here.")
-        
+        self._status = msg_handler.MotorState.FOLDING
+        await self.robot.deploy(self.deploy_direction)
+        self._status = msg_handler.MotorState.FOLDED
+        return self._status
 
     async def read_status(self) -> msg_handler.MotorState:
-        raise NotImplementedError("Add direct motor status read code here.")
+        return self._status
 
     async def stop(self) -> None:
         """Release hardware resources or stop the motor safely here."""
-        self.robot.cleanup_all()
+        if self.robot is not None:
+            self.robot.cleanup_all()
+            self.robot = None
 
 class MockMotorController(MotorHardwareController):
     """Mock motor controller for local development.
@@ -212,5 +220,7 @@ def build_motor_controller(
             initial_status=driver_config.initial_status,
             logger=logger,
         )
+    if driver_config.kind == "hardware":
+        return MotorHardwareController(logger=logger)
 
     raise ValueError(f"Unsupported driver kind: {driver_config.kind}")

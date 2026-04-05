@@ -1,3 +1,4 @@
+import asyncio
 import RPi.GPIO as GPIO
 import time
 
@@ -32,24 +33,24 @@ class Step_Motor:
           GPIO.output(self.pins[2], w3)
           GPIO.output(self.pins[3], w4)
 
-     def step_once(self, directiron=1):
+     async def step_once(self, directiron=1):
           if directiron==1:
                for step in self._seq:
                     self._set_step(*step)
-                    time.sleep(self.delay)
+                    await asyncio.sleep(self.delay)
           else:
                for step in reversed(self._seq):
                     self._set_step(*step)
-                    time.sleep(self.delay)
+                    await asyncio.sleep(self.delay)
 
-     def rotate(self, steps, direction=1):
+     async def rotate(self, steps, direction=1):
           for _ in range(steps):
-               self.step_once(direction)
+               await self.step_once(direction)
 
-     def rotate_degress(self, degrees, direction=1):
+     async def rotate_degress(self, degrees, direction=1):
           step_per_rev = 512
           steps = int(degrees / 360.0 * step_per_rev)
-          self.rotate(steps, direction)
+          await self.rotate(steps, direction)
 
      def stop(self):
           for pin in self.pins:
@@ -115,21 +116,21 @@ class Robot:
           self.step_motor2.cleanup()
           GPIO.cleanup()
           
-     def deploy(self, direction=1):
+     async def deploy(self, direction=1):
           if direction == 1:
                print("Deploying")
-               self.step_motor2.rotate_degress(45, direction)
-               time.sleep(1)
-               self.step_motor1.rotate_degress(230, -direction)
-               
+               await self.step_motor2.rotate_degress(45, direction)
+               await asyncio.sleep(1)
+               await self.step_motor1.rotate_degress(230, -direction)
+
           else:
                print("Retracting")
-               self.step_motor1.rotate_degress(230, -direction)
-               time.sleep(1)
-               self.step_motor2.rotate_degress(45, direction)
+               await self.step_motor1.rotate_degress(230, -direction)
+               await asyncio.sleep(1)
+               await self.step_motor2.rotate_degress(45, direction)
           
 
-if __name__ == "__main__":
+async def _main() -> None:
      print("Try to test motor control classes...")
      step_pins1 = [17,18,27,22]
      step_pins2 = [23,24,25,16]
@@ -137,14 +138,14 @@ if __name__ == "__main__":
      robot = Robot(step_pins1, step_pins2)
 
      try:
-          
+
           print("Step motors  deploy")
-          # robot.step_motor1.rotate(1024)
-          robot.deploy(1)
-          
-          time.sleep(0.5)
+          # await robot.step_motor1.rotate(1024)
+          await robot.deploy(1)
+
+          await asyncio.sleep(0.5)
           print("Step motor flod")
-          robot.deploy(-1)
+          await robot.deploy(-1)
           # print("Step motor 2 forward 1 round")
           # robot.step_motor2.rotate(1024)
           
@@ -162,4 +163,8 @@ if __name__ == "__main__":
      finally:
           robot.cleanup_all()
           print("GPIO Cleaned up")
-     
+
+
+if __name__ == "__main__":
+     asyncio.run(_main())
+

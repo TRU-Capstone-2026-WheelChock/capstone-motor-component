@@ -6,18 +6,18 @@ logging:
   level: INFO
 
 driver:
-  kind: mock
+  kind: hardware
   motion_duration_sec: 5.0
   initial_status: FOLDED
 
 command:
-  endpoint: "tcp://host.docker.internal:5557"
+  endpoint: "tcp://center:5557"
   topics:
     - ""
   is_bind: false
 
 heartbeat:
-  endpoint: "tcp://host.docker.internal:5555"
+  endpoint: "tcp://center:5555"
   topic: ""
   is_connect: true
   interval_sec: 1.0

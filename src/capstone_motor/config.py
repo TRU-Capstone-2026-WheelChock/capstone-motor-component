@@ -29,6 +29,7 @@ class DriverConfig:
     kind: str = "mock"
     motion_duration_sec: float = 5.0
     initial_status: msg_handler.MotorState = msg_handler.MotorState.FOLDED
+    init_retry_interval_sec: float = 5.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,6 +104,9 @@ def build_motor_component_config(raw_config: dict[str, Any]) -> MotorComponentCo
             motion_duration_sec=float(driver.get("motion_duration_sec", 5.0)),
             initial_status=msg_handler.MotorState(
                 str(driver.get("initial_status", msg_handler.MotorState.FOLDED))
+            ),
+            init_retry_interval_sec=float(
+                driver.get("init_retry_interval_sec", 30.0)
             ),
         ),
     )

@@ -64,6 +64,8 @@ def build_app(config_path: str | None = None) -> MotorComponentApp:
         command_receiver=command_receiver,
         heartbeat_publisher=heartbeat_publisher,
         motor_controller=motor_controller,
+        state_store=state_store,
+        init_retry_interval_sec=component_config.driver.init_retry_interval_sec,
         logger=logger,
     )
 

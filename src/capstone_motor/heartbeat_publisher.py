@@ -30,6 +30,7 @@ class HeartbeatPublisher:
         self.refresh_status = refresh_status
         self.logger = logger or logging.getLogger(__name__)
         self.seq_no = 0
+        self._last_logged_status: int | None = None
 
     async def build_message(self) -> msg_handler.SensorMessage:
         if self.refresh_status is not None:
@@ -46,7 +47,26 @@ class HeartbeatPublisher:
 
     async def publish_once(self, publisher: _AsyncHeartbeatPublisher) -> None:
         message = await self.build_message()
+        self._log_message(message)
         await publisher.send(message)
+
+    def _log_message(self, message: msg_handler.SensorMessage) -> None:
+        payload = message.payload
+        self.logger.debug(
+            "heartbeat send seq=%d sender=%s status=%s status_code=%d",
+            message.sequence_no,
+            message.sender_id,
+            payload.status,
+            payload.status_code,
+        )
+        if payload.status != self._last_logged_status:
+            self.logger.info(
+                "heartbeat status changed: status=%s status_code=%d (seq=%d)",
+                payload.status,
+                payload.status_code,
+                message.sequence_no,
+            )
+            self._last_logged_status = payload.status
 
     async def run(self) -> None:
         async with msg_handler.get_async_publisher(self.pub_opt) as publisher:
