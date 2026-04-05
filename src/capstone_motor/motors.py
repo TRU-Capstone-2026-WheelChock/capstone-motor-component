@@ -1,9 +1,12 @@
 import asyncio
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
+import lgpio as GPIO
 import time
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+try:
+     chip = GPIO.gpiochip_open(4)
+except Exception:
+    chip = GPIO.gpiochip_open(0)
 
 class Step_Motor:
 # IN1 = 17
@@ -23,15 +26,18 @@ class Step_Motor:
      def __init__(self, pin1, pin2, pin3, pin4, delay=0.002):
           self.pins = [pin1, pin2, pin3, pin4]
           self.delay = delay
+          self.chip = chip
+          
+          
+          
           for pin in self.pins:
-               GPIO.setup(pin, GPIO.OUT)
-               GPIO.output(pin, GPIO.LOW)
+               GPIO.gpio_claim_output(self.chip, pin, 0)
 
      def _set_step(self, w1, w2, w3, w4):
-          GPIO.output(self.pins[0], w1)
-          GPIO.output(self.pins[1], w2)
-          GPIO.output(self.pins[2], w3)
-          GPIO.output(self.pins[3], w4)
+          GPIO.gpio_write(self.chip, self.pins[0], w1)
+          GPIO.gpio_write(self.chip, self.pins[1], w2)
+          GPIO.gpio_write(self.chip, self.pins[2], w3)
+          GPIO.gpio_write(self.chip, self.pins[3], w4)
 
      async def step_once(self, directiron=1):
           if directiron==1:
@@ -54,52 +60,52 @@ class Step_Motor:
 
      def stop(self):
           for pin in self.pins:
-               GPIO.output(pin, GPIO.LOW)
+               GPIO.gpio_write(chip, pin, 0)
 
      def cleanup(self):
           self.stop()
 
-class DCMotor:
-     def __init__(self, in1, in2, ena, freq=1000):
-          self.in1 = in1
-          self.in2 = in2
-          self.ena = ena
-
-          GPIO.setup([in1, in2, ena], GPIO.OUT)
-          GPIO.output([in1, in2, ena], GPIO.LOW)
-
-          self.pwm = GPIO.PWM(ena, freq)
-          self.pwm.start(0)
-          self.speed = 0
-
-     def forward(self, speed_percent):
-          GPIO.output(self.in1, GPIO.HIGH)
-          GPIO.output(self.in2, GPIO.LOW)
-          self.pwm.ChangeDutyCycle(speed_percent)
-          self.speed = speed_percent
-
-     def backward(self, speed_percent):
-          GPIO.output(self.in1, GPIO.LOW)
-          GPIO.output(self.in2, GPIO.HIGH)
-          self.pwm.ChangeDutyCycle(speed_percent)
-          self.speed = speed_percent
-
-     def stop(self):
-          GPIO.output([self.in1, self.in2], GPIO.LOW)
-          self.pwm.ChangeDutyCycle(0)
-          self.speed = 0
-
-     def set_speed(self, speed_precent):
-          if self.speed > 0:
-               self.forward(speed_precent)
-          elif self.speed < 0:
-               self.backword(speed_precent)
-          else:
-               self.pwm.ChangeDutyCycle(speed_precent)
-
-     def cleanup(self):
-          self.pwm.stop()
-          GPIO.output([self.in1, self.in2, self.ena], GPIO.LOW)
+# class DCMotor:
+     # def __init__(self, in1, in2, ena, freq=1000):
+          # self.in1 = in1
+          # self.in2 = in2
+          # self.ena = ena
+# 
+          # GPIO.setup([in1, in2, ena], GPIO.OUT)
+          # GPIO.output([in1, in2, ena], GPIO.LOW)
+# 
+          # self.pwm = GPIO.PWM(ena, freq)
+          # self.pwm.start(0)
+          # self.speed = 0
+# 
+     # def forward(self, speed_percent):
+          # GPIO.output(self.in1, GPIO.HIGH)
+          # GPIO.output(self.in2, GPIO.LOW)
+          # self.pwm.ChangeDutyCycle(speed_percent)
+          # self.speed = speed_percent
+# 
+     # def backward(self, speed_percent):
+          # GPIO.output(self.in1, GPIO.LOW)
+          # GPIO.output(self.in2, GPIO.HIGH)
+          # self.pwm.ChangeDutyCycle(speed_percent)
+          # self.speed = speed_percent
+# 
+     # def stop(self):
+          # GPIO.output([self.in1, self.in2], GPIO.LOW)
+          # self.pwm.ChangeDutyCycle(0)
+          # self.speed = 0
+# 
+     # def set_speed(self, speed_precent):
+          # if self.speed > 0:
+               # self.forward(speed_precent)
+          # elif self.speed < 0:
+               # self.backword(speed_precent)
+          # else:
+               # self.pwm.ChangeDutyCycle(speed_precent)
+# 
+     # def cleanup(self):
+          # self.pwm.stop()
+          # GPIO.output([self.in1, self.in2, self.ena], GPIO.LOW)
 
 class Robot:
      def __init__(self, step_pins1, step_pins2, step_delay=0.002):
@@ -114,7 +120,7 @@ class Robot:
      def cleanup_all(self):
           self.step_motor1.cleanup()
           self.step_motor2.cleanup()
-          GPIO.cleanup()
+          GPIO.gpiochip_close(chip)
           
      async def deploy(self, direction=1):
           if direction == 1:

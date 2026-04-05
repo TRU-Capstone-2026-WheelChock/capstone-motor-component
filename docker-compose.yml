@@ -33,7 +33,14 @@ services:
 
   motor:
     <<: *runtime-base
-    privileged: true
+    # privileged: true
+    group_add:
+      - "994"
+    devices:
+      # - /dev/i2c-1:/dev/i2c-1
+      - /dev/gpiochip4:/dev/gpiochip4
+      - /dev/gpiochip0:/dev/gpiochip0
+      # - /dev/mem:/dev/mem
     command: python -m capstone_motor.main
 
 volumes:
